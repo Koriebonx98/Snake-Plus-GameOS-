@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "snake-express-v1";
+const CACHE = "snake-express-v2";
 const ASSETS = ["./", "./index.html", "./style.css", "./game.js", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", event => {
