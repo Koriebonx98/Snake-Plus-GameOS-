@@ -421,7 +421,28 @@ $("start-button").addEventListener("click", startGame);
 $("leave-button").addEventListener("click", () => showScreen("lobby"));
 $("again-button").addEventListener("click", () => showScreen("lobby"));
 $("mode").addEventListener("change", event => { mode = event.target.value; renderLobby(); $("mode").focus(); });
-document.querySelectorAll("[data-direction]").forEach(button => button.addEventListener("click", () => setDirection(players.find(p => p.type === "keyboard"), DIRECTIONS[button.dataset.direction])));
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+if (isIOS || isStandalone || navigator.maxTouchPoints > 0 && matchMedia("(pointer:coarse)").matches) document.documentElement.classList.add("touch-enabled");
+if (isIOS) document.documentElement.classList.add("ios");
+const keyboardPlayer = () => players.find(p => p.type === "keyboard");
+document.querySelectorAll("[data-direction]").forEach(button => {
+  const press = event => { event.preventDefault(); setDirection(keyboardPlayer(), DIRECTIONS[button.dataset.direction]); };
+  button.addEventListener("pointerdown", press);
+  button.addEventListener("click", event => { if (event.detail === 0) press(event); });
+});
+let swipe = null;
+const board = document.querySelector(".board-wrap");
+board.addEventListener("touchstart", event => { const t = event.changedTouches[0]; swipe = [t.clientX, t.clientY]; }, { passive: true });
+board.addEventListener("touchmove", event => {
+  event.preventDefault();
+  if (!swipe) return;
+  const t = event.changedTouches[0], dx = t.clientX - swipe[0], dy = t.clientY - swipe[1];
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+  setDirection(keyboardPlayer(), DIRECTIONS[Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up")]);
+  swipe = [t.clientX, t.clientY];
+}, { passive: false });
+board.addEventListener("touchend", () => { swipe = null; });
 document.addEventListener("keydown", event => {
   if (screen === "game") {
     const key = event.key.toLowerCase();
